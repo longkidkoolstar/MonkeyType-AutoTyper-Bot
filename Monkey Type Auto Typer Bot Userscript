@@ -14,18 +14,6 @@
 
 
 
-    // Minimum and maximum delay (ms)
-    let MIN_DELAY = 100;
-    let MAX_DELAY = 333;
-    const TOGGLE_KEY = "ArrowRight";
-    const log = console.log;
-
-    function random(min, max) {
-        return Math.floor(Math.random() * (max - min + 1) + min);
-    }
-
-    let toggle = false;
-    function canType() {
         const typingTest = document.getElementById("typingTest");
         const isHidden = typingTest.classList.contains("hidden");
         if (isHidden) toggle = false;
