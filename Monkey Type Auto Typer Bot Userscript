@@ -12,12 +12,7 @@
 /* jshint esversion:6 */
 
 
-//Credit to Murka007 for providing the foundation code for this wouldn't have been able to do this without you. Sorry I didn't ask for perms jus wanted to post this fast please don't report.
-//If you want me to take it down, Dm me at kdkoolstar#3114. Please and thank you. Enjoy the script!!!
 
-
-(function() {
-    "use strict";
 
     // Minimum and maximum delay (ms)
     let MIN_DELAY = 100;
