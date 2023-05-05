@@ -1,0 +1,183 @@
+// ==UserScript==
+// @name MonkeyType AutoTyper Bot
+// @author longkidkoolstar
+// @description A Bot that automatically types for you in MokeyType.
+// @icon https://th.bing.com/th/id/R.c8397fb766c4397fea8a8b499c15a453?rik=aROX42RoH7HhXw&pid=ImgRaw&r=0
+// @version 1.0
+// @match *://monkeytype.com/*
+// @run-at document-start
+// @grant none
+// @license MIT
+// ==/UserScript==
+/* jshint esversion:6 */
+
+
+//Credit to Murka007 for providing the foundation code for this wouldn't have been able to do this without you. Sorry I didn't ask for perms jus wanted to post this fast please don't report.
+//If you want me to take it down, Dm me at kdkoolstar#3114. Please and thank you. Enjoy the script!!!
+
+
+(function() {
+    "use strict";
+
+    // Minimum and maximum delay (ms)
+    let MIN_DELAY = 100;
+    let MAX_DELAY = 333;
+    const TOGGLE_KEY = "ArrowRight";
+    const log = console.log;
+
+    function random(min, max) {
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+
+    let toggle = false;
+    function canType() {
+        const typingTest = document.getElementById("typingTest");
+        const isHidden = typingTest.classList.contains("hidden");
+        if (isHidden) toggle = false;
+        return toggle && !isHidden;
+    }
+
+    function getNextCharacter() {
+        const currentWord = document.querySelector(".word.active");
+        for (const letter of currentWord.children) {
+            if (letter.className === "") return letter.textContent;
+        }
+        return " ";
+    }
+
+    const InputEvents = {};
+    function pressKey(key) {
+        const wordsInput = document.getElementById("wordsInput");
+        const KeyboardEvent = Object.assign({}, DEFAULT_INPUT_OPTIONS, { target: wordsInput, data: key });
+        const InputEvent = Object.assign({}, DEFAULT_KEY_OPTIONS, { target: wordsInput, key: key });
+
+        wordsInput.value += key;
+        InputEvents.beforeinput(InputEvent);
+        InputEvents.input(InputEvent);
+        InputEvents.keyup(KeyboardEvent);
+    }
+
+    function typeCharacter() {
+        if (!canType()) {
+            log("STOPPED TYPING TEST");
+            return;
+        }
+
+        const nextChar = getNextCharacter();
+
+        // introduce some random errors
+        const errorChance = 0.05; // 5% chance of an error
+        if (Math.random() < errorChance) {
+            // skip this character
+            setTimeout(typeCharacter, random(MIN_DELAY, MAX_DELAY));
+            return;
+        } else if (Math.random() < errorChance) {
+            // repeat this character
+            pressKey(nextChar);
+        } else if (Math.random() < errorChance) {
+            // insert a random incorrect character
+            const randomChar = String.fromCharCode(random(97, 122)); // random lowercase letter
+            pressKey(randomChar);
+        }
+
+        // press the next character
+        pressKey(nextChar);
+
+        // introduce a pause between words
+        if (nextChar === " ") {
+            const pauseDelay = random(500, 1500); // pause for 0.5 to 1.5 seconds
+            setTimeout(typeCharacter, pauseDelay);
+        } else {
+            setTimeout(typeCharacter, random(MIN_DELAY, MAX_DELAY));
+        }
+    }
+
+    window.addEventListener("keydown", function(event) {
+        if (event.code === TOGGLE_KEY) {
+            event.preventDefault();
+
+            if (event.repeat) return;
+            toggle = !toggle;
+            if (toggle) {
+                log("STARTED TYPING TEST");
+                typeCharacter();
+            }
+        }
+    })
+
+    // Intercept when JQuery attached an addEventListener to the Input element
+    function hook(element) {
+        element.addEventListener = new Proxy(element.addEventListener, {
+            apply(target, _this, args) {
+                const [type, listener, ...options] = args;
+                if (_this.id === "wordsInput") {
+                    InputEvents[type] = listener;
+                }
+                return target.apply(_this, args);
+            }
+        })
+    }
+    hook(HTMLInputElement.prototype);
+
+    const DEFAULT_KEY_OPTIONS = {
+        key: "", code: "", keyCode: 0, which: 0, isTrusted: true, altKey: false,
+        bubbles: true, cancelBubble: false, cancelable: true, charCode: 0,
+        composed: true, ctrlKey: false, currentTarget: null, defaultPrevented: false,
+        detail: 0, eventPhase: 0, isComposing: false, location: 0, metaKey: false,
+        path: null, repeat: false, returnValue: true, shiftKey: false, srcElement: null,
+        target: null, timeStamp: 6338.5, type: "", view: window,
+    };
+
+    const DEFAULT_INPUT_OPTIONS = {
+        isTrusted: true, bubbles: true, cancelBubble: false, cancelable: false,
+        composed: true, data: "", dataTransfer: null, defaultPrevented: false,
+        detail: 0, eventPhase: 0, inputType: "insertText", isComposing: false,
+        path: null, returnValue: true, sourceCapabilities: null, srcElement: null,
+        target: null, currentTarget: null, timeStamp: 11543, type: "input",
+        view: null, which: 0
+    };
+
+    // Add GUI to change min and max delay
+const gui = document.createElement("div");
+gui.style.position = "fixed";
+gui.style.bottom = "50%";
+gui.style.right = "0";
+gui.style.transform = "translateY(50%)";
+gui.style.padding = "5px";
+gui.style.background = "rgba(0, 0, 0, 0.6)";
+gui.style.color = "white";
+gui.style.fontFamily = "sans-serif";
+gui.style.fontSize = "12px";
+gui.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="margin-bottom: 5px;">
+            Min Delay: <input type="number" id="minDelayInput" value="${MIN_DELAY}" min="0" max="1000" step="10" style="width: 40px;">
+        </div>
+        <div>
+            Max Delay: <input type="number" id="maxDelayInput" value="${MAX_DELAY}" min="0" max="1000" step="10" style="width: 40px;">
+        </div>
+    </div>
+`;
+document.body.appendChild(gui);
+
+const minDelayInput = document.getElementById("minDelayInput");
+const maxDelayInput = document.getElementById("maxDelayInput");
+
+minDelayInput.addEventListener("input", function() {
+    MIN_DELAY = parseInt(minDelayInput.value);
+});
+
+maxDelayInput.addEventListener("input", function() {
+    MAX_DELAY = parseInt(maxDelayInput.value);
+});
+
+// Add event listener to prevent keydown event from propagating to Monkeytype
+minDelayInput.addEventListener("keydown", (event) => {
+  event.stopPropagation();
+});
+
+maxDelayInput.addEventListener("keydown", (event) => {
+  event.stopPropagation();
+});
+
+})();
